@@ -15,6 +15,7 @@ use Laravel\Sanctum\HasApiTokens;
 
 class AuthController extends Controller
 {
+
     /**
      * Registra um novo usuário
      *
@@ -76,9 +77,13 @@ class AuthController extends Controller
         }
 
         // Usando Sanctum para criar um token de acesso
-        $token = $user->createToken('auth_token')->plainTextToken;
+        $token = $user->createToken('auth_token', ['*'], Carbon::now()->addMinutes(config('sanctum.expiration')));
 
-        return response()->json(['token' => $token], 200);
+        Log::info('Token created', ['token' => $token]);
+
+        $tokenAccess = $token->plainTextToken;
+
+        return response()->json(['token' => $tokenAccess], 200);
     }
 
     /**
@@ -104,25 +109,6 @@ class AuthController extends Controller
      */
     public function verify(Request $request)
     {
-        $user = $request->user();
-
-        Log::info('Verify token, last used at ' . $user->currentAccessToken()->last_used_at);
-
-        if ($user && $user->currentAccessToken()) {
-            $lastUsed = $user->currentAccessToken()->last_used_at;
-            $expirationPeriod = 1; // Define o tempo de expiração em minutos
-
-            // Verifica se o token está inativo por mais tempo que o período definido
-            if (Carbon::parse($lastUsed)->diffInMinutes(now()) > $expirationPeriod) {
-                // Invalida o token se estiver inativo por muito tempo
-                $user->currentAccessToken()->delete();
-                return response()->json(['message' => 'Token expired'], 401);
-            } else {
-                // Renova o last_used_at do token para o momento atual
-                $user->currentAccessToken()->forceFill(['last_used_at' => now()])->save();
-            }
-        }
-        
         // Retorna uma resposta vazia com status 200 se o token for válido
         return response()->json(['message' => 'Token is valid'], 200);
     }

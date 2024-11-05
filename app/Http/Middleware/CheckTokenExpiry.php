@@ -12,21 +12,32 @@ class CheckTokenExpiry
 {
     public function handle(Request $request, Closure $next)
     {
-        Log::info('Check token expiry', ['request' => $request]);
-        /*
-        $user = $request->user(); 
+        Log::info('Check token expiry');
 
+        $user               = $request->user(); 
+        
         if ($user && $user->currentAccessToken()) {
-            $lastUsed = $user->currentAccessToken()->last_used_at;
-            $expirationPeriod = 30; // Define o tempo de expiração em minutos
+            $expirationPeriod = config('sanctum.expiration'); // Pega o valor do arquivo de configuração
 
-            // Verifica se o token está inativo por mais tempo que o período definido
-            if (Carbon::parse($lastUsed)->diffInMinutes(now()) > $expirationPeriod) {
-                // Invalida o token se estiver inativo por muito tempo
+            $lastUsedToken      = $user->currentAccessToken()->last_used_at;
+            $expirationToken    = $user->currentAccessToken()->expires_at;
+            
+
+            Log::info("Verify token, last used at $lastUsedToken, expires at $expirationToken");
+
+            // Verifica se o token ainda é válido
+            if (Carbon::parse($expirationToken)->isPast()) {
+                Log::info('Token expired');
                 $user->currentAccessToken()->delete();
                 return response()->json(['message' => 'Token expired'], 401);
+            } else {
+                // Renova a expiração do token para o tempo definido na configuração
+                Log::info('Token is valid');
+                $user->currentAccessToken()->forceFill(['expires_at' => now()->addMinutes($expirationPeriod)])->save();
             }
-        }*/
+        } else {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
 
         return $next($request);
     }
