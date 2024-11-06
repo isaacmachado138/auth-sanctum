@@ -14,7 +14,7 @@ class CheckTokenExpiry
     {
         Log::info('Check token expiry');
 
-        $user               = $request->user(); 
+        $user = $request->user(); 
         
         if ($user && $user->currentAccessToken()) {
             $expirationPeriod = config('sanctum.expiration'); // Pega o valor do arquivo de configuração

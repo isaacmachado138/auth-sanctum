@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 
 use App\Models\User;
+use App\Models\PersonalAccessToken;
 
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
@@ -87,15 +88,20 @@ class AuthController extends Controller
     }
 
     /**
-     * Logout e revogação do token
+     * logout do usuário.
      *
-     * @param \Illuminate\Http\Request $request
-     * @return \Illuminate\Http\JsonResponse
+     * 
+     * @param \Illuminate\Http\Request $request A requisição HTTP que contém o token de autenticação.
+     * @return \Illuminate\Http\JsonResponse 
+     * 
+     * @example
+     * DELETE /api/logout
+     * {
+     *    "token": "TOKEN"
+     * }
      */
     public function logout(Request $request)
     {
-        Log::info('Logout user', ['email' => $request->email]);
-
         $request->user()->currentAccessToken()->delete();
 
         return response()->json(['message' => 'Logged out successfully'], 200);
